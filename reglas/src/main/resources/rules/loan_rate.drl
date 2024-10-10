@@ -1,0 +1,125 @@
+import com.udea.reglas.model.Participant;
+global com.udea.reglas.model.Rate rate;
+dialect "mvel"
+
+rule "Checking Existing Debt Against Lean amount"
+    when
+        Participant(loanAmount > (2 * existingDebt))
+    then
+        rate.setLoanStatus("Rejected - Too Much Debt");
+        rate.setLoanRate(999);
+end
+
+rule "Checking Annual Salary is grater than 50000"
+    when
+        Participant(annualSalary <= 50000)
+    then
+        rate.setLoanStatus("Rejected - Too low salary");
+        rate.setLoanRate(999);
+end
+
+rule "Checking Credit Score less than 550"
+    when
+        Participant(creditScore < 550, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Rejected");
+        rate.setLoanRate(999);
+end
+
+rule "Checking Credit Score less than 650"
+    when
+        Participant(creditScore < 650 && creditScore >= 550, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(7.25);
+end
+
+rule "Checking Credit Score less than 750"
+    when
+        Participant(creditScore < 750 && creditScore >= 650, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(6.25);
+end
+
+rule "Checking Credit Score greater than 750"
+    when
+        Participant(creditScore >= 750, annualSalary > 50000, loanAmount < (2 * existingDebt))
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(5.25);
+end
+
+rule "Reject loan for temporary employment"
+    when
+        Participant(employmentType == "temporary")
+    then
+        rate.setLoanStatus("Rejected - Temporary Employment");
+        rate.setLoanRate(999);
+end
+
+rule "Lower interest rate for higher education"
+    when
+        Participant(educationLevel == "Master" || educationLevel == "Doctorate")
+    then
+        rate.setLoanRate(4.5);
+end
+
+rule "Higher interest rate for large number of dependents"
+    when
+        Participant(numberOfDependents > 3)
+    then
+        rate.setLoanRate(rate.getLoanRate() + 0.5);
+end
+
+rule "Lower interest rate for long employment duration"
+    when
+        Participant(yearsOfEmployment > 10)
+    then
+        rate.setLoanRate(rate.getLoanRate() - 0.75);
+end
+
+rule "Reject loan for marital status single with low salary"
+    when
+        Participant(maritalStatus == "single" && annualSalary < 30000)
+    then
+        rate.setLoanStatus("Rejected - Single with Low Salary");
+        rate.setLoanRate(999);
+end
+
+rule "Approve loan for married applicants with high salary"
+    when
+        Participant(maritalStatus == "married" && annualSalary > 70000)
+    then
+        rate.setLoanStatus("Approved");
+        rate.setLoanRate(5.0);
+end
+
+rule "Offer education loan for educational purpose"
+    when
+        Participant(loanPurpose == "education")
+    then
+        rate.setLoanStatus("Approved - Education Loan");
+        rate.setLoanRate(3.5);
+end
+
+rule "Higher interest rate for vehicle loans"
+    when
+        Participant(loanPurpose == "vehicle")
+    then
+        rate.setLoanRate(rate.getLoanRate() + 1.0);
+end
+
+rule "Special interest rate for home loans"
+    when
+        Participant(loanPurpose == "mortgage")
+    then
+        rate.setLoanRate(3.0);
+end
+
+rule "Offer insurance product for high loan amount"
+    when
+        Participant(loanAmount > 500000)
+    then
+        rate.setLoanStatus("Approved - Offer Insurance Product");
+end
